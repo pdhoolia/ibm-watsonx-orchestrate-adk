@@ -1,0 +1,747 @@
+openapi: 3.0.3
+info:
+  title: Investment Banking & Markets API
+  version: 1.0.0
+  description: |
+    A hybrid enterprise + AI-tooling API specification for a modern investment bank.
+    This spec covers workflows across:
+      - Corporate Advisory (M&A, strategic advisory)
+      - ECM / DCM (capital raising)
+      - Markets (trading, market data, pricing)
+      - Research
+      - Private Capital (credit, PE-style underwriting)
+      - Compliance / KYC
+      - Document generation
+
+servers:
+ - url: http://host.docker.internal:9991
+
+tags:
+  - name: Company
+  - name: Valuation
+  - name: Deals
+  - name: Investors
+  - name: Markets
+  - name: Trading
+  - name: Research
+  - name: PrivateCredit
+  - name: Compliance
+  - name: Documents
+
+paths:
+
+  #############################################
+  # COMPANY DATA + FINANCIALS
+  #############################################
+
+  /company/get_financials:
+    post:
+      tags: [Company]
+      summary: Get financial statements for a company
+      description: Retrieve historical and forecastable financials for a public or private company.
+      operationId: get_company_financials
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetFinancialsRequest'
+      responses:
+        '200':
+          description: Company financials retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinancialsResponse'
+
+  /company/get_profile:
+    post:
+      tags: [Company]
+      summary: Retrieve core company profile
+      description: Get industry classification, description, key metrics and metadata.
+      operationId: get_company_profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompanyProfileRequest'
+      responses:
+        '200':
+          description: Company profile response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyProfileResponse'
+
+
+  #############################################
+  # VALUATION
+  #############################################
+
+  /valuation/get_summary:
+    post:
+      tags: [Valuation]
+      summary: Compute valuation summary (comps, DCF)
+      operationId: get_valuation_summary
+      description: |
+        Runs standardized comparable companies and discounted cash flow valuation models.
+        Agent-friendly: can accept natural-language "valuation_goal".
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValuationRequest'
+      responses:
+        '200':
+          description: Valuation output
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValuationResponse'
+
+
+  #############################################
+  # DEALS – M&A, ECM, DCM
+  #############################################
+
+  /deals/search_comps:
+    post:
+      tags: [Deals]
+      summary: Retrieve precedent transaction comparables
+      operationId: search_deal_comps
+      description: Search for past similar M&A, IPO, LBO, or bond transactions.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DealCompsRequest'
+      responses:
+        '200':
+          description: List of comparable transactions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DealCompsResponse'
+
+  /deals/generate_term_sheet:
+    post:
+      tags: [Deals]
+      summary: Generate draft term sheet for equity or debt deal
+      operationId: generate_term_sheet
+      description: Auto-generates term sheet structure based on given transaction parameters.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TermSheetRequest'
+      responses:
+        '200':
+          description: Term sheet draft
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TermSheetResponse'
+
+
+  #############################################
+  # INVESTORS – ECM/DCM DISTRIBUTION
+  #############################################
+
+  /investors/find:
+    post:
+      tags: [Investors]
+      summary: Retrieve suitable investors for a deal
+      operationId: find_investors
+      description: |
+        Search investor profiles by mandate, preferences, region, check size.
+        Used for ECM/DCM bookbuilding and private capital allocation.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvestorSearchRequest'
+      responses:
+        '200':
+          description: Investor list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvestorSearchResponse'
+
+
+  #############################################
+  # MARKETS – PRICING, DATA
+  #############################################
+
+  /markets/get_market_data:
+    post:
+      tags: [Markets]
+      summary: Get live or recent market data
+      operationId: get_market_data
+      description: Returns price, volume, volatility, and instrument metadata.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarketDataRequest'
+      responses:
+        '200':
+          description: Market data snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketDataResponse'
+
+  /markets/compute_bond_pricing:
+    post:
+      tags: [Markets]
+      summary: Compute bond yields, spreads, and pricing
+      operationId: compute_bond_pricing
+      description: Pricing engine for corporate or government bonds.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BondPricingRequest'
+      responses:
+        '200':
+          description: Pricing result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BondPricingResponse'
+
+
+  #############################################
+  # TRADING
+  #############################################
+
+  /trading/execute_order:
+    post:
+      tags: [Trading]
+      summary: Execute a trade order
+      operationId: execute_trade_order
+      description: |
+        Places a buy/sell order in equities, credit, or derivatives.
+        Includes basic risk checks.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TradeOrderRequest'
+      responses:
+        '200':
+          description: Execution details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeExecutionResponse'
+
+
+  #############################################
+  # RESEARCH
+  #############################################
+
+  /research/search:
+    post:
+      tags: [Research]
+      summary: Search research notes and summaries
+      operationId: search_research
+      description: Search by ticker, sector, topic, or sentiment.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResearchSearchRequest'
+      responses:
+        '200':
+          description: Research summary list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResearchSearchResponse'
+
+
+  #############################################
+  # PRIVATE CREDIT / PRIVATE CAPITAL
+  #############################################
+
+  /private-credit/score:
+    post:
+      tags: [PrivateCredit]
+      summary: Score a private credit lending opportunity
+      operationId: private_credit_score
+      description: |
+        Returns underwriting metrics, risk rating, leverage, DSCR, covenants.
+        Accepts both structured financials and natural-language summaries.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrivateCreditRequest'
+      responses:
+        '200':
+          description: Underwriting summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateCreditResponse'
+
+
+  #############################################
+  # COMPLIANCE / KYC
+  #############################################
+
+  /compliance/screen_entity:
+    post:
+      tags: [Compliance]
+      summary: Run compliance screening (KYC, AML, sanctions)
+      description: Screen a person or company against sanctions, PEP, AML, and adverse media lists and return risk flags.
+      operationId: compliance_screen
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComplianceRequest'
+      responses:
+        '200':
+          description: Compliance flags
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplianceResponse'
+
+
+  #############################################
+  # DOCUMENT GENERATION
+  #############################################
+
+  /documents/generate_summary:
+    post:
+      tags: [Documents]
+      summary: Generate a structured summary document
+      operationId: generate_document
+      description: Convert analysis outputs into pitchbook pages, memos, or packs.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentGenerationRequest'
+      responses:
+        '200':
+          description: Document draft
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentGenerationResponse'
+
+
+#############################################
+# COMPONENTS / SCHEMAS
+#############################################
+
+components:
+  schemas:
+
+    #############################################
+    # COMPANY + FINANCIALS
+    #############################################
+
+    GetFinancialsRequest:
+      type: object
+      required: [company_identifier]
+      properties:
+        company_identifier:
+          type: string
+          description: Ticker or private-company UUID
+        period:
+          type: string
+          enum: [annual, quarterly, trailing]
+        forecast_horizon_years:
+          type: integer
+          default: 5
+
+    FinancialsResponse:
+      type: object
+      properties:
+        company:
+          $ref: '#/components/schemas/Company'
+        financials:
+          $ref: '#/components/schemas/FinancialStatements'
+
+    GetCompanyProfileRequest:
+      type: object
+      required: [company_identifier]
+      properties:
+        company_identifier:
+          type: string
+
+    CompanyProfileResponse:
+      type: object
+      properties:
+        company:
+          $ref: '#/components/schemas/Company'
+
+
+    Company:
+      type: object
+      properties:
+        company_id: { type: string }
+        name: { type: string }
+        industry: { type: string }
+        sector: { type: string }
+        description: { type: string }
+        headquarters: { type: string }
+        exchange: { type: string }
+        market_cap: { type: number }
+
+
+    #############################################
+    # FINANCIAL STATEMENTS
+    #############################################
+
+    FinancialStatements:
+      type: object
+      properties:
+        income_statement:
+          $ref: '#/components/schemas/IncomeStatement'
+        balance_sheet:
+          $ref: '#/components/schemas/BalanceSheet'
+        cash_flow:
+          $ref: '#/components/schemas/CashFlow'
+
+    IncomeStatement:
+      type: object
+      properties:
+        revenue: { type: number }
+        ebitda: { type: number }
+        operating_income: { type: number }
+        net_income: { type: number }
+
+    BalanceSheet:
+      type: object
+      properties:
+        total_assets: { type: number }
+        total_liabilities: { type: number }
+        equity: { type: number }
+
+    CashFlow:
+      type: object
+      properties:
+        operating_cf: { type: number }
+        investing_cf: { type: number }
+        financing_cf: { type: number }
+
+
+    #############################################
+    # VALUATION
+    #############################################
+
+    ValuationRequest:
+      type: object
+      properties:
+        company_identifier:
+          type: string
+        peer_list:
+          type: array
+          items: { type: string }
+        valuation_goal:
+          type: string
+          description: Natural-language target (e.g., "fair value estimate for IPO")
+        include_dcf:
+          type: boolean
+          default: true
+        include_comps:
+          type: boolean
+          default: true
+
+    ValuationResponse:
+      type: object
+      properties:
+        valuation_summary:
+          type: object
+          properties:
+            dcf_value: { type: number }
+            comps_value: { type: number }
+            blended_value: { type: number }
+        assumptions:
+          type: object
+        peer_comparables:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComparableCompany'
+
+
+    ComparableCompany:
+      type: object
+      properties:
+        company_identifier: { type: string }
+        ev_to_ebitda: { type: number }
+        pe_ratio: { type: number }
+        revenue_growth: { type: number }
+
+
+    #############################################
+    # DEAL COMPS + TERM SHEET
+    #############################################
+
+    DealCompsRequest:
+      type: object
+      properties:
+        industry: { type: string }
+        deal_type:
+          type: string
+          enum: [M&A, IPO, Secondary, Bond, Loan, LBO]
+        size_min: { type: number }
+        size_max: { type: number }
+        date_range:
+          type: array
+          items: { type: string }
+
+    DealCompsResponse:
+      type: object
+      properties:
+        deals:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComparableDeal'
+
+    ComparableDeal:
+      type: object
+      properties:
+        deal_id: { type: string }
+        target: { type: string }
+        acquirer: { type: string }
+        value: { type: number }
+        transaction_type: { type: string }
+        closing_date: { type: string }
+        multiples:
+          type: object
+          properties:
+            ev_to_ebitda: { type: number }
+            revenue_multiple: { type: number }
+
+
+    TermSheetRequest:
+      type: object
+      properties:
+        deal_type:
+          type: string
+          enum: [Equity, Debt]
+        company_identifier: { type: string }
+        raise_amount: { type: number }
+        notes: { type: string }
+
+    TermSheetResponse:
+      type: object
+      properties:
+        term_sheet_id: { type: string }
+        deal_type: { type: string }
+        sections:
+          type: array
+          items:
+            type: object
+            properties:
+              title: { type: string }
+              content: { type: string }
+
+
+    #############################################
+    # INVESTORS
+    #############################################
+
+    InvestorSearchRequest:
+      type: object
+      properties:
+        region: { type: string }
+        mandate: { type: string }
+        min_check_size: { type: number }
+
+    InvestorSearchResponse:
+      type: object
+      properties:
+        investors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Investor'
+
+
+    Investor:
+      type: object
+      properties:
+        investor_id: { type: string }
+        name: { type: string }
+        type: { type: string }
+        region: { type: string }
+        preferences:
+          type: object
+          properties:
+            industries: { type: array, items: { type: string } }
+            check_size_min: { type: number }
+            check_size_max: { type: number } 
+
+
+    #############################################
+    # MARKETS + PRICING
+    #############################################
+
+    MarketDataRequest:
+      type: object
+      properties:
+        instrument_id: { type: string }
+        fields:
+          type: array
+          items: { type: string }
+
+    MarketDataResponse:
+      type: object
+      properties:
+        instrument_id: { type: string }
+        price: { type: number }
+        volume: { type: number }
+        volatility: { type: number }
+        timestamp: { type: string }
+
+
+    BondPricingRequest:
+      type: object
+      properties:
+        face_value: { type: number }
+        coupon_rate: { type: number }
+        maturity_years: { type: number }
+        yield_curve_tenor: { type: string }
+
+    BondPricingResponse:
+      type: object
+      properties:
+        price: { type: number }
+        yield_to_maturity: { type: number }
+        spread: { type: number }
+
+
+    #############################################
+    # TRADING
+    #############################################
+
+    TradeOrderRequest:
+      type: object
+      required: [instrument_id, side, quantity]
+      properties:
+        instrument_id: { type: string }
+        side:
+          type: string
+          enum: [BUY, SELL]
+        quantity: { type: number }
+        limit_price: { type: number }
+        order_type:
+          type: string
+          enum: [MARKET, LIMIT]
+        client_id: { type: string }
+
+    TradeExecutionResponse:
+      type: object
+      properties:
+        order_id: { type: string }
+        status: { type: string }
+        executed_price: { type: number }
+        executed_quantity: { type: number }
+        timestamp: { type: string }
+
+
+    #############################################
+    # RESEARCH
+    #############################################
+
+    ResearchSearchRequest:
+      type: object
+      properties:
+        query: { type: string }
+        tickers:
+          type: array
+          items: { type: string }
+        sector: { type: string }
+
+    ResearchSearchResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResearchNote'
+
+    ResearchNote:
+      type: object
+      properties:
+        note_id: { type: string }
+        title: { type: string }
+        summary: { type: string }
+        analyst: { type: string }
+        sentiment: { type: string }
+
+
+    #############################################
+    # PRIVATE CREDIT
+    #############################################
+
+    PrivateCreditRequest:
+      type: object
+      properties:
+        borrower_name: { type: string }
+        financials:
+          $ref: '#/components/schemas/FinancialStatements'
+        loan_amount: { type: number }
+        purpose: { type: string }
+        narrative: { type: string }
+
+    PrivateCreditResponse:
+      type: object
+      properties:
+        risk_score: { type: number }
+        leverage_ratio: { type: number }
+        dscr: { type: number }
+        recommended_covenants:
+          type: array
+          items: { type: string }
+
+
+    #############################################
+    # COMPLIANCE
+    #############################################
+
+    ComplianceRequest:
+      type: object
+      properties:
+        entity_name: { type: string }
+        jurisdiction: { type: string }
+        entity_type: { type: string }
+
+    ComplianceResponse:
+      type: object
+      properties:
+        entity_name: { type: string }
+        sanctions_hits: { type: array, items: { type: string } }
+        aml_risk_level: { type: string }
+        pep_status: { type: string }
+
+
+    #############################################
+    # DOCUMENT GENERATION
+    #############################################
+
+    DocumentGenerationRequest:
+      type: object
+      properties:
+        document_type:
+          type: string
+          enum: [summary, memo, pitchbook_page]
+        content:
+          type: object
+          additionalProperties: true
+
+    DocumentGenerationResponse:
+      type: object
+      properties:
+        document_id: { type: string }
+        content_markdown: { type: string }
